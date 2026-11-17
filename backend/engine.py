@@ -6,6 +6,7 @@ class Candle:
     high: float
     low: float
     close: float
+    open: float = 0.0
 
 def rma(values, period):
     out = [None] * len(values)
@@ -58,5 +59,5 @@ def calculate(candles, atr_period=10, multiplier=3.0, adx_period=14, min_adx=25)
         signal = None
         if trend[i] != trend[i-1] and adx[i] is not None and adx[i] > min_adx:
             signal = 'BUY' if trend[i] == 1 else 'SELL'
-        result.append({'timestamp':candles[i].timestamp,'close':candles[i].close,'adx':round(adx[i],2),'trend':trend[i],'signal':signal})
+        result.append({'timestamp':candles[i].timestamp,'close':candles[i].close,'adx':round(adx[i],2),'trend':trend[i],'supertrend':round(lower[i] if trend[i] == 1 else upper[i], 2),'signal':signal})
     return result

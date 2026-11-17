@@ -36,7 +36,34 @@ async def signals(
     for x in raw:
         t = datetime.fromisoformat(x['datetime']).replace(tzinfo=timezone.utc).timestamp()
         if t+seconds <= now:
-            candles.append(Candle(x['datetime'],float(x['high']),float(x['low']),float(x['close'])))
+            candles.append(Candle(x['datetime'],float(x['high']),float(x['low']),float(x['close']),float(x['open'])))
     results = calculate(candles, atr_period=atr_period, multiplier=multiplier, adx_period=adx_period, min_adx=min_adx)
     if not results: raise HTTPException(502,'Not enough finalized candles')
-    return {'symbol':'XAUUSD','interval':interval,'latest':results[-1]}
+    return {'symbol':'XAUUSD','interval':interval,'latest':results[-1],'indicators':results[-100:],'candles':[{'time':c.timestamp,'open':c.open,'high':c.high,'low':c.low,'close':c.close} for c in candles[-100:]]}
+
+@app.get("/chart")
+async def chart(
+    interval: str = "5min",
+    atr_period: int = 10,
+    multiplier: float = 3.0,
+    adx_period: int = 14,
+    min_adx: float = 25.0
+):
+    from fastapi.encoders import jsonable_encoder
+
+    result = await signals(
+        interval=interval,
+        atr_period=atr_period,
+        multiplier=multiplier,
+        adx_period=adx_period,
+        min_adx=min_adx
+    )
+
+    return {
+        "symbol": "XAUUSD",
+        "interval": interval,
+        "latest": jsonable_encoder(result["latest"]),
+        "status": "connected",
+        "candles": result["candles"],
+        "indicators": result["indicators"]
+    }

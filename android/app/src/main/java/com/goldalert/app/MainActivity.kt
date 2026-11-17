@@ -18,6 +18,25 @@ class MainActivity : Activity() {
         root.addView(TextView(this).apply { text = "Supertrend (10, 3) + ADX (14) > 25\nOnly finalized candles. Requires your own HTTPS backend."; textSize = 15f })
         val url = EditText(this).apply { hint = "https://your-server.example"; setSingleLine(); setText(prefs.getString("url", "")); inputType = 17 }
         root.addView(url)
+
+        fun setting(label: String, key: String, default: String): EditText {
+            root.addView(TextView(this).apply {
+                text = label
+                textSize = 16f
+            })
+            return EditText(this).apply {
+                setSingleLine(true)
+                inputType = 8194
+                setText(prefs.getString(key, default))
+                root.addView(this)
+            }
+        }
+
+        val atrInput = setting("Supertrend ATR Period", "atr_period", "10")
+        val multiplierInput = setting("Supertrend Multiplier", "multiplier", "3")
+        val adxInput = setting("ADX Period", "adx_period", "14")
+        val minAdxInput = setting("Minimum ADX", "min_adx", "25")
+
         val intervals = arrayOf("1min", "5min", "15min", "30min", "1h", "4h")
         val spinner = Spinner(this).apply { adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, intervals); setSelection(intervals.indexOf(prefs.getString("interval", "5min")).coerceAtLeast(0)) }
         root.addView(spinner)
@@ -26,7 +45,12 @@ class MainActivity : Activity() {
         root.addView(Button(this).apply { text = "Start monitoring"; setOnClickListener {
             val endpoint = url.text.toString().trim().trimEnd('/')
             if (!endpoint.startsWith("https://")) { status.text = "Please enter an HTTPS server URL"; return@setOnClickListener }
-            prefs.edit().putString("url", endpoint).putString("interval", spinner.selectedItem.toString()).apply()
+            prefs.edit()
+                    .putString("atr_period", atrInput.text.toString())
+                    .putString("multiplier", multiplierInput.text.toString())
+                    .putString("adx_period", adxInput.text.toString())
+                    .putString("min_adx", minAdxInput.text.toString())
+                    .putString("url", endpoint).putString("interval", spinner.selectedItem.toString()).apply()
             try { startForegroundService(Intent(this@MainActivity, MonitorService::class.java).setAction("START")); status.text = "Monitoring requested; check persistent notification" }
             catch (e: Exception) { status.text = "Unable to start: ${e.message}" }
         } })

@@ -37,7 +37,11 @@ class MonitorService : Service() {
         val base = prefs.getString("url", "") ?: return
         val interval = prefs.getString("interval", "5min") ?: "5min"
         if (!base.startsWith("https://")) return
-        val connection = URL("$base/signals?interval=$interval").openConnection() as HttpURLConnection
+        val connection = URL("$base/signals?interval=$interval" +
+                "&atr_period=${prefs.getString("atr_period", "10")}" +
+                "&multiplier=${prefs.getString("multiplier", "3")}" +
+                "&adx_period=${prefs.getString("adx_period", "14")}" +
+                "&min_adx=${prefs.getString("min_adx", "25")}").openConnection() as HttpURLConnection
         connection.connectTimeout = 12000
         connection.readTimeout = 12000
         try {

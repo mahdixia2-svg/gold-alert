@@ -15,7 +15,7 @@ def rma(values, period):
         out[i] = (out[i-1] * (period-1) + values[i]) / period
     return out
 
-def calculate(candles, atr_period=10, multiplier=3.0, adx_period=14):
+def calculate(candles, atr_period=10, multiplier=3.0, adx_period=14, min_adx=25):
     n = len(candles)
     if n < max(atr_period, adx_period * 2) + 3: return []
     tr, pdm, mdm = [], [], []
@@ -56,7 +56,7 @@ def calculate(candles, atr_period=10, multiplier=3.0, adx_period=14):
     result=[]
     for i in range(first+1,n):
         signal = None
-        if trend[i] != trend[i-1] and adx[i] is not None and adx[i] > 25:
+        if trend[i] != trend[i-1] and adx[i] is not None and adx[i] > min_adx:
             signal = 'BUY' if trend[i] == 1 else 'SELL'
         result.append({'timestamp':candles[i].timestamp,'close':candles[i].close,'adx':round(adx[i],2),'trend':trend[i],'signal':signal})
     return result

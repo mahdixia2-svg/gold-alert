@@ -12,7 +12,13 @@ API_KEY = os.getenv('TWELVE_DATA_API_KEY','')
 def health(): return {'ok':True}
 
 @app.get('/signals')
-async def signals(interval: str='5min'):
+async def signals(
+    interval: str='5min',
+    atr_period: int=10,
+    multiplier: float=3.0,
+    adx_period: int=14,
+    min_adx: float=25.0
+):
     if interval not in {'1min','5min','15min','30min','1h','4h'}:
         raise HTTPException(400,'Unsupported interval')
     if not API_KEY: raise HTTPException(503,'Set TWELVE_DATA_API_KEY on server')
@@ -31,6 +37,6 @@ async def signals(interval: str='5min'):
         t = datetime.fromisoformat(x['datetime']).replace(tzinfo=timezone.utc).timestamp()
         if t+seconds <= now:
             candles.append(Candle(x['datetime'],float(x['high']),float(x['low']),float(x['close'])))
-    results = calculate(candles)
+    results = calculate(candles, atr_period=atr_period, multiplier=multiplier, adx_period=adx_period, min_adx=min_adx)
     if not results: raise HTTPException(502,'Not enough finalized candles')
     return {'symbol':'XAUUSD','interval':interval,'latest':results[-1]}
